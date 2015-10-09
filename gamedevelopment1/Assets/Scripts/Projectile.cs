@@ -4,6 +4,7 @@ using System.Collections;
 public class Projectile : MonoBehaviour {
 
 	[SerializeField] private float destroyTime;
+	public float damage;
 	// Use this for initialization
 	void Start () {
 	
@@ -17,6 +18,9 @@ public class Projectile : MonoBehaviour {
 		} else {
 			Destroy(gameObject);
 		}
-		
+	}
+
+	void OnCollisionEnter(Collision col){
+		Destroy (gameObject);
 	}
 }

@@ -4,52 +4,124 @@ using System.Collections;
 public class Gun : MonoBehaviour {
 
 	[SerializeField] private float fireRate;
-	[SerializeField] private float maxFireRate;
 	[SerializeField] private float reloadTime;
-	[SerializeField] private float maxReloadTime;
+	[SerializeField] private Vector3 stillPos;
 	[SerializeField] private Vector3 sightPos;
+	[SerializeField] private Vector3 stillRotation;
+	[SerializeField] private float recoilAmount;
+	[SerializeField] private float damage;
 
-	private float bulletSpeed = 75f;
+	private float sprintTimer = 0.333f;
+	private float maxFireRate;
+	private float maxReloadTime;
+	private float bulletSpeed = 200f;
 	private float flashDuration = 0.015f;
 	private float maxFlashDuration = 0.015f;
 	private Vector3 fakeMousePos;
 	private bool canShoot;
 	private Animator anim;
-	private Vector3 stillPos, recoilPos;
-
+	private Vector3 recoilPos, currentPos;
+	
 	private bool reloading;
+	private bool isADS;
 
-	public Rigidbody bulletPrefab;
+	public Rigidbody bulletPrefab, shellPrefab;
 	public Transform bulletExitPoint, shellExitPoint;
 	public SpriteRenderer flash;
 
+	public int ammo;
+	private int maxAmmo;
 
+
+#region CROSSHAIR
+	public Texture2D crosshair;
+	private float centerX = Screen.width / 2;
+	private float centerY = Screen.height / 2;
+	private float cursorW = 32;
+	private float cursorH = 32;
+#endregion
+
+
+	void OnGUI(){
+		if (!isADS) {
+			GUI.DrawTexture (new Rect (centerX - cursorW / 2, centerY - cursorH / 2, cursorW, cursorH), crosshair);
+		}
+	}
 
 	// Use this for initialization
 	void Start () {
+#if UNITY_EDITOR
+		Cursor.lockState = CursorLockMode.Locked; // Lock the cursor from moving if in editor
+#endif
 		canShoot = true; // We can shoot
 		reloading = false; // Not reloading
+		isADS = false; // Not aiming
+		maxAmmo = ammo; //Set up our max variables for resetting them later
+		maxFireRate = fireRate;//////
+		maxReloadTime = reloadTime;//////
 		fakeMousePos = new Vector3 (Screen.width / 2, Screen.height / 2, Input.mousePosition.z); // Fake mouse pos used is placed in center of screen
 		anim = GetComponent<Animator> ();
-		stillPos = new Vector3 (transform.position.x, transform.position.y, transform.position.z);
-		recoilPos = new Vector3 (stillPos.x, stillPos.y, stillPos.z + 0.2f);
+		transform.localPosition = stillPos;
+		currentPos = transform.localPosition;
+		transform.localRotation = new Quaternion (stillRotation.x, stillRotation.y, stillRotation.z, transform.localRotation.w);
+		//stillPos = new Vector3 (transform.localPosition.x, transform.localPosition.y, transform.localPosition.z);
+		recoilPos = new Vector3 (stillPos.x, stillPos.y, stillPos.z - 0.2f);
 	}
 	
 	// Update is called once per frame
 	void Update () {
+		transform.localPosition = Vector3.Lerp (transform.localPosition, currentPos, 0.5f);
+
+		if (Input.GetKey (KeyCode.LeftShift)) {
+			canShoot = false;
+			anim.applyRootMotion = false;
+			anim.SetBool ("sprinting",true);
+		}
+
+		if (Input.GetKeyUp(KeyCode.LeftShift)) {
+			canShoot = true;
+			anim.SetBool ("sprinting",false);
+
+			currentPos = stillPos;
+			transform.localRotation = new Quaternion (stillRotation.x, stillRotation.y, stillRotation.z, transform.localRotation.w);
+//			anim.SetBool("outOfSprint",true);
+		}
+
+		if (anim.IsInTransition (0)) {
+			anim.applyRootMotion = false;
+		} else {
+			anim.applyRootMotion = true;
+		}
+
+//		if (anim.GetBool ("outOfSprint")) {//All guns out sprint animations must be the same for this to work
+//			if(sprintTimer > 0){
+//				sprintTimer -= Time.deltaTime;
+//			} else {
+//				anim.SetBool("outOfSprint",false);
+//				sprintTimer = 0.333f;
+//				anim.applyRootMotion = true;
+//				currentPos = stillPos;
+//				//transform.localPosition = stillPos;
+//				transform.localRotation = new Quaternion (stillRotation.x, stillRotation.y, stillRotation.z, transform.localRotation.w);
+//			}
+//		}
+	
+
 		if (Input.GetKeyDown (KeyCode.Mouse1)) {
-			transform.position = sightPos;
+			currentPos = sightPos;
+			isADS = true;
 		}
 
 		if (Input.GetKeyUp (KeyCode.Mouse1)) {
-			transform.position = stillPos;
+			currentPos = stillPos;
+			isADS = false;
 		}
 
-		if (Input.GetKey (KeyCode.Mouse0) && canShoot) { //Fire the gun with left mouse button
+		if (Input.GetKey (KeyCode.Mouse0) && canShoot && ammo > 0) { //Fire the gun with left mouse button
 			FireGun();
 		}
 
-		if (Input.GetKeyDown (KeyCode.R) && !reloading) { // Reload gun with R
+		if ((Input.GetKeyDown (KeyCode.R) || ammo <= 0) && !reloading) { // Reload gun with R
 			ReloadGun();
 		}
 
@@ -63,50 +135,64 @@ public class Gun : MonoBehaviour {
 	}
 
 	private void FireGun(){
-
-		//transform.position = recoilPos;
+		ammo--;
+		recoilPos = new Vector3 (transform.localPosition.x, transform.localPosition.y, transform.localPosition.z - recoilAmount);
+		currentPos = recoilPos;
 		flash.enabled = true;
+		flash.gameObject.GetComponent<Light> ().enabled = true;
 		flashDuration = maxFlashDuration;
-		anim.SetBool ("shooting", true);
 		canShoot = false;
 		Ray mousePos = Camera.main.ScreenPointToRay (fakeMousePos); // Point at center of screen
-		Rigidbody newBullet = Instantiate (bulletPrefab, bulletExitPoint.transform.position, new Quaternion(0,0,0,0)) as Rigidbody; // Create bullet at bullet exit point
-		newBullet.transform.LookAt (mousePos.GetPoint (500f)); // Aim bullet at center of screen
-		newBullet.velocity = transform.forward * bulletSpeed; // Move bullet towards center with speed of bulletSpeed
-		Quaternion newRot = newBullet.transform.rotation;
-		newRot.eulerAngles = new Vector3 (0, 90, 0);
-		newBullet.rotation = newRot;
-		//CreateShell ();
+		Rigidbody newBullet = Instantiate (bulletPrefab, bulletExitPoint.transform.position, transform.rotation) as Rigidbody; // Create bullet at bullet exit point
+		newBullet.transform.LookAt (mousePos.GetPoint (350f)); // Aim bullet at center of screen
+		newBullet.velocity = transform.parent.forward * bulletSpeed; // Move bullet towards center with speed of bulletSpeed
+		newBullet.GetComponent<Projectile> ().damage = damage;
+		CreateShell (mousePos);
+
 	}
 
-	private void CreateShell(){
-		Rigidbody newShell = Instantiate (bulletPrefab, shellExitPoint.transform.position, shellExitPoint.transform.rotation) as Rigidbody; // Create shell at shell exit point
-		newShell.AddForce (20, 0, -20f, ForceMode.Impulse);
+	private void CreateShell(Ray mousePos){
+		Rigidbody newShell = Instantiate (shellPrefab, shellExitPoint.transform.position, shellExitPoint.transform.rotation) as Rigidbody; // Create shell at shell exit point
+		//newShell.AddForce (40f, 10f, 0f, ForceMode.Impulse);
+		newShell.transform.GetChild(0).Rotate(new Vector3(Random.Range(0,360),0,Random.Range(0,360)));
+		newShell.velocity = transform.parent.right * 10f;
+		newShell.transform.LookAt (mousePos.GetPoint (30f));
 	}
 
 	private void ReloadGun(){
-		if (anim.GetBool ("shooting")) {
-			anim.SetBool ("shooting", false);
+		if(isADS){
+			currentPos = sightPos;
+		} else{ 
+			currentPos = stillPos;
 		}
+		flash.enabled = false;
+		flash.gameObject.GetComponent<Light> ().enabled = false;
+		anim.applyRootMotion = false;
 		canShoot = false;
 		anim.SetBool ("reloading", true);
 		reloading = true;
+		ammo = 0;
 	}
 
 	private void PrepareGunForFiring(){
 		if (flashDuration > 0) {
 			flashDuration -= Time.deltaTime;
 		} else {
-			//transform.position = stillPos;
+			if(isADS){
+				currentPos = sightPos;
+			} else{ 
+				currentPos = stillPos;
+			}
 			flashDuration = maxFlashDuration;
 			flash.enabled = false;
+			flash.gameObject.GetComponent<Light> ().enabled = false;
 		}
 		if (fireRate > 0) {
 			fireRate -= Time.deltaTime;
 		} else {
 			canShoot = true;
 			fireRate = maxFireRate;
-			anim.SetBool ("shooting", false);
+			//anim.SetBool ("shooting", false);
 		}
 	}
 
@@ -114,10 +200,13 @@ public class Gun : MonoBehaviour {
 		if(reloadTime > 0){
 			reloadTime -= Time.deltaTime;
 		} else {
+			ammo = maxAmmo;
 			canShoot = true;
 			reloading = false;
 			reloadTime = maxReloadTime;
 			anim.SetBool("reloading",false);
+			anim.applyRootMotion = true;
+			transform.localRotation = new Quaternion (stillRotation.x, stillRotation.y, stillRotation.z, transform.localRotation.w);
 		}
 	}
 }
