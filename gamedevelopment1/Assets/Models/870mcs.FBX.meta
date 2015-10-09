@@ -1,32 +1,43 @@
 fileFormatVersion: 2
-guid: de4d50b4fd28c654fafb1b05c01c3658
-timeCreated: 1444007270
+guid: c79191e564080dc478cee9f603c1a7dc
+timeCreated: 1444406610
 licenseType: Free
 ModelImporter:
   serializedVersion: 18
   fileIDToRecycleName:
-    100000: Cylinder08
-    100002: Object01
-    100004: Object02
-    100006: Object05
-    100008: //RootNode
-    400000: Cylinder08
-    400002: Object01
-    400004: Object02
-    400006: Object05
-    400008: //RootNode
-    2300000: Cylinder08
-    2300002: Object01
-    2300004: Object02
-    2300006: Object05
-    3300000: Cylinder08
-    3300002: Object01
-    3300004: Object02
-    3300006: Object05
-    4300000: Cylinder08
-    4300002: Object01
-    4300004: Object02
-    4300006: Object05
+    100000: //RootNode
+    100002: 870mcs
+    100004: 870mcs_12 gauge round
+    100006: 870mcs_bolt
+    100008: 870mcs_pump
+    100010: 870mcs_side shells
+    100012: 870mcs_top rail
+    400000: //RootNode
+    400002: 870mcs
+    400004: 870mcs_12 gauge round
+    400006: 870mcs_bolt
+    400008: 870mcs_pump
+    400010: 870mcs_side shells
+    400012: 870mcs_top rail
+    2300000: 870mcs
+    2300002: 870mcs_12 gauge round
+    2300004: 870mcs_bolt
+    2300006: 870mcs_pump
+    2300008: 870mcs_side shells
+    2300010: 870mcs_top rail
+    3300000: 870mcs
+    3300002: 870mcs_12 gauge round
+    3300004: 870mcs_bolt
+    3300006: 870mcs_pump
+    3300008: 870mcs_side shells
+    3300010: 870mcs_top rail
+    4300000: 870mcs
+    4300002: 870mcs_top rail
+    4300004: 870mcs_pump
+    4300006: 870mcs_bolt
+    4300008: 870mcs_side shells
+    4300010: 870mcs_12 gauge round
+    9500000: //RootNode
   materials:
     importMaterials: 1
     materialName: 0
@@ -83,8 +94,10 @@ ModelImporter:
     legStretch: .0500000007
     feetSpacing: 0
     rootMotionBoneName: 
+    hasTranslationDoF: 0
   lastHumanDescriptionAvatarSource: {instanceID: 0}
-  animationType: 0
+  animationType: 2
+  humanoidOversampling: 1
   additionalBone: 0
   userData: 
   assetBundleName: 

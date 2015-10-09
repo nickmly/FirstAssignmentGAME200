@@ -10,6 +10,8 @@ public class Gun : MonoBehaviour {
 	[SerializeField] private Vector3 stillRotation;
 	[SerializeField] private float recoilAmount;
 	[SerializeField] private float damage;
+	[SerializeField] private bool shotgun;
+	[SerializeField] private float lerpSpeed;
 
 	private float sprintTimer = 0.333f;
 	private float maxFireRate;
@@ -18,7 +20,7 @@ public class Gun : MonoBehaviour {
 	private float flashDuration = 0.015f;
 	private float maxFlashDuration = 0.015f;
 	private Vector3 fakeMousePos;
-	private bool canShoot;
+	private bool canShoot, pumping;
 	private Animator anim;
 	private Vector3 recoilPos, currentPos;
 	
@@ -26,7 +28,7 @@ public class Gun : MonoBehaviour {
 	private bool isADS;
 
 	public Rigidbody bulletPrefab, shellPrefab;
-	public Transform bulletExitPoint, shellExitPoint;
+	public Transform bulletExitPoint, shellExitPoint, bulletExitPoint1, bulletExitPoint2;
 	public SpriteRenderer flash;
 
 	public int ammo;
@@ -55,6 +57,7 @@ public class Gun : MonoBehaviour {
 #endif
 		canShoot = true; // We can shoot
 		reloading = false; // Not reloading
+		pumping = false; // Not pumping
 		isADS = false; // Not aiming
 		maxAmmo = ammo; //Set up our max variables for resetting them later
 		maxFireRate = fireRate;//////
@@ -70,7 +73,7 @@ public class Gun : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-		transform.localPosition = Vector3.Lerp (transform.localPosition, currentPos, 0.5f);
+		transform.localPosition = Vector3.Lerp (transform.localPosition, currentPos, lerpSpeed);
 
 		if (Input.GetKey (KeyCode.LeftShift)) {
 			canShoot = false;
@@ -138,8 +141,35 @@ public class Gun : MonoBehaviour {
 		newBullet.transform.LookAt (mousePos.GetPoint (350f)); // Aim bullet at center of screen
 		newBullet.velocity = transform.parent.forward * bulletSpeed; // Move bullet towards center with speed of bulletSpeed
 		newBullet.GetComponent<Projectile> ().damage = damage;
-		CreateShell (mousePos);
+		if(shotgun){
+			Rigidbody newBullet1 = Instantiate (bulletPrefab, bulletExitPoint1.transform.position, transform.rotation) as Rigidbody; // Create bullet at bullet exit point
+			newBullet1.transform.LookAt (mousePos.GetPoint (350f)); // Aim bullet at center of screen
+			newBullet1.velocity = transform.parent.forward * bulletSpeed; // Move bullet towards center with speed of bulletSpeed
+			newBullet1.GetComponent<Projectile> ().damage = damage;
 
+			Rigidbody newBullet2 = Instantiate (bulletPrefab, bulletExitPoint2.transform.position, transform.rotation) as Rigidbody; // Create bullet at bullet exit point
+			newBullet2.transform.LookAt (mousePos.GetPoint (350f)); // Aim bullet at center of screen
+			newBullet2.velocity = transform.parent.forward * bulletSpeed; // Move bullet towards center with speed of bulletSpeed
+			newBullet2.GetComponent<Projectile> ().damage = damage;
+		}//TODO: fix rotation on these bullets
+
+		if (!shotgun) {
+			CreateShell (mousePos);
+		}
+
+	}
+
+
+	private void PumpGun(){
+		canShoot = true;
+		fireRate = maxFireRate;
+		anim.SetBool ("pumping", false);
+		anim.applyRootMotion = true;
+	}
+
+	private void CreateShell(){
+		Ray mousePos = Camera.main.ScreenPointToRay (fakeMousePos); // Point at center of screen
+		CreateShell (mousePos);
 	}
 
 	private void CreateShell(Ray mousePos){
@@ -166,7 +196,6 @@ public class Gun : MonoBehaviour {
 	}
 
 	private void ResetGun(){
-		Debug.Log ("TEST");
 		anim.applyRootMotion = true;
 		if (!isADS) {
 			currentPos = stillPos;
@@ -194,7 +223,14 @@ public class Gun : MonoBehaviour {
 		if (fireRate > 0) {
 			fireRate -= Time.deltaTime;
 		} else {
-			canShoot = true;
+			if(!shotgun){
+				canShoot = true;
+			} else {
+				pumping = true;
+				anim.SetBool ("pumping", true);
+				anim.applyRootMotion = false;
+			}
+
 			fireRate = maxFireRate;
 			//anim.SetBool ("shooting", false);
 		}
