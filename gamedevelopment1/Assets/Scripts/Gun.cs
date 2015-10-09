@@ -81,17 +81,8 @@ public class Gun : MonoBehaviour {
 		if (Input.GetKeyUp(KeyCode.LeftShift)) {
 			canShoot = true;
 			anim.SetBool ("sprinting",false);
-
-			currentPos = stillPos;
-			transform.localRotation = new Quaternion (stillRotation.x, stillRotation.y, stillRotation.z, transform.localRotation.w);
-//			anim.SetBool("outOfSprint",true);
 		}
 
-		if (anim.IsInTransition (0)) {
-			anim.applyRootMotion = false;
-		} else {
-			anim.applyRootMotion = true;
-		}
 
 //		if (anim.GetBool ("outOfSprint")) {//All guns out sprint animations must be the same for this to work
 //			if(sprintTimer > 0){
@@ -172,6 +163,19 @@ public class Gun : MonoBehaviour {
 		anim.SetBool ("reloading", true);
 		reloading = true;
 		ammo = 0;
+	}
+
+	private void ResetGun(){
+		Debug.Log ("TEST");
+		anim.applyRootMotion = true;
+		if (!isADS) {
+			currentPos = stillPos;
+		} else {
+			currentPos = sightPos;
+		}
+
+		transform.localRotation = new Quaternion (stillRotation.x, stillRotation.y, stillRotation.z, transform.localRotation.w);
+
 	}
 
 	private void PrepareGunForFiring(){

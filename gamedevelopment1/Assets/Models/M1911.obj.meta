@@ -1,36 +1,17 @@
 fileFormatVersion: 2
-guid: ba64a3ef19a9f1e4183df4275eb5c9ea
-timeCreated: 1443931456
+guid: cda3e622f50eea6488cd4e7ec016baf6
+timeCreated: 1444404140
 licenseType: Free
 ModelImporter:
   serializedVersion: 18
   fileIDToRecycleName:
-    100000: //RootNode
-    100002: Hammer
-    100004: Mag
-    100006: Slide
-    100008: Trigger
-    400000: //RootNode
-    400002: Hammer
-    400004: Mag
-    400006: Slide
-    400008: Trigger
-    2300000: //RootNode
-    2300002: Hammer
-    2300004: Mag
-    2300006: Slide
-    2300008: Trigger
-    3300000: //RootNode
-    3300002: Hammer
-    3300004: Mag
-    3300006: Slide
-    3300008: Trigger
-    4300000: Mesh_0008
-    4300002: Slide
-    4300004: Mag
-    4300006: Trigger
-    4300008: Hammer
-    9500000: //RootNode
+    100000: default
+    100002: //RootNode
+    400000: default
+    400002: //RootNode
+    2300000: default
+    3300000: default
+    4300000: default
   materials:
     importMaterials: 1
     materialName: 0
@@ -87,8 +68,10 @@ ModelImporter:
     legStretch: .0500000007
     feetSpacing: 0
     rootMotionBoneName: 
+    hasTranslationDoF: 0
   lastHumanDescriptionAvatarSource: {instanceID: 0}
-  animationType: 2
+  animationType: 0
+  humanoidOversampling: 1
   additionalBone: 0
   userData: 
   assetBundleName: 
