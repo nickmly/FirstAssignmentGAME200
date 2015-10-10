@@ -28,7 +28,7 @@ public class Gun : MonoBehaviour {
 	private bool isADS;
 
 	public Rigidbody bulletPrefab, shellPrefab;
-	public Transform bulletExitPoint, shellExitPoint, bulletExitPoint1, bulletExitPoint2;
+	public Transform bulletExitPoint, shellExitPoint;
 	public SpriteRenderer flash;
 
 	public int ammo;
@@ -52,9 +52,6 @@ public class Gun : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-#if UNITY_EDITOR
-		Cursor.lockState = CursorLockMode.Locked; // Lock the cursor from moving if in editor
-#endif
 		canShoot = true; // We can shoot
 		reloading = false; // Not reloading
 		pumping = false; // Not pumping
@@ -69,6 +66,7 @@ public class Gun : MonoBehaviour {
 		transform.localRotation = new Quaternion (stillRotation.x, stillRotation.y, stillRotation.z, transform.localRotation.w);
 		//stillPos = new Vector3 (transform.localPosition.x, transform.localPosition.y, transform.localPosition.z);
 		recoilPos = new Vector3 (stillPos.x, stillPos.y, stillPos.z - 0.2f);
+		ResetGun ();
 	}
 	
 	// Update is called once per frame
@@ -85,21 +83,6 @@ public class Gun : MonoBehaviour {
 			canShoot = true;
 			anim.SetBool ("sprinting",false);
 		}
-
-
-//		if (anim.GetBool ("outOfSprint")) {//All guns out sprint animations must be the same for this to work
-//			if(sprintTimer > 0){
-//				sprintTimer -= Time.deltaTime;
-//			} else {
-//				anim.SetBool("outOfSprint",false);
-//				sprintTimer = 0.333f;
-//				anim.applyRootMotion = true;
-//				currentPos = stillPos;
-//				//transform.localPosition = stillPos;
-//				transform.localRotation = new Quaternion (stillRotation.x, stillRotation.y, stillRotation.z, transform.localRotation.w);
-//			}
-//		}
-	
 
 		if (Input.GetKeyDown (KeyCode.Mouse1)) {
 			currentPos = sightPos;
@@ -141,17 +124,17 @@ public class Gun : MonoBehaviour {
 		newBullet.transform.LookAt (mousePos.GetPoint (350f)); // Aim bullet at center of screen
 		newBullet.velocity = transform.parent.forward * bulletSpeed; // Move bullet towards center with speed of bulletSpeed
 		newBullet.GetComponent<Projectile> ().damage = damage;
-		if(shotgun){
-			Rigidbody newBullet1 = Instantiate (bulletPrefab, bulletExitPoint1.transform.position, transform.rotation) as Rigidbody; // Create bullet at bullet exit point
-			newBullet1.transform.LookAt (mousePos.GetPoint (350f)); // Aim bullet at center of screen
-			newBullet1.velocity = transform.parent.forward * bulletSpeed; // Move bullet towards center with speed of bulletSpeed
-			newBullet1.GetComponent<Projectile> ().damage = damage;
-
-			Rigidbody newBullet2 = Instantiate (bulletPrefab, bulletExitPoint2.transform.position, transform.rotation) as Rigidbody; // Create bullet at bullet exit point
-			newBullet2.transform.LookAt (mousePos.GetPoint (350f)); // Aim bullet at center of screen
-			newBullet2.velocity = transform.parent.forward * bulletSpeed; // Move bullet towards center with speed of bulletSpeed
-			newBullet2.GetComponent<Projectile> ().damage = damage;
-		}//TODO: fix rotation on these bullets
+//		if(shotgun){
+//			Rigidbody newBullet1 = Instantiate (bulletPrefab, bulletExitPoint.transform.position, transform.rotation) as Rigidbody; // Create bullet at bullet exit point
+//			newBullet1.transform.LookAt (mousePos.GetPoint (700f)); // Aim bullet at center of screen
+//			newBullet1.velocity = transform.parent.forward * bulletSpeed; // Move bullet towards center with speed of bulletSpeed
+//			newBullet1.GetComponent<Projectile> ().damage = damage;
+//
+//			Rigidbody newBullet2 = Instantiate (bulletPrefab, bulletExitPoint.transform.position, transform.rotation) as Rigidbody; // Create bullet at bullet exit point
+//			newBullet2.transform.LookAt (mousePos.GetPoint (125f)); // Aim bullet at center of screen
+//			newBullet2.velocity = transform.parent.forward * bulletSpeed; // Move bullet towards center with speed of bulletSpeed
+//			newBullet2.GetComponent<Projectile> ().damage = damage;
+//		}//TODO: fix rotation on these bullets
 
 		if (!shotgun) {
 			CreateShell (mousePos);
