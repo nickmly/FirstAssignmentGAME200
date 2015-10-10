@@ -37,6 +37,7 @@ public class Player : MonoBehaviour {
 		Move (velocity);
 		Rotate (rotation);
 		RotateCamera (cameraRotation);
+
 	}
 
 	private void Move(Vector3 newVelocity){
@@ -50,6 +51,9 @@ public class Player : MonoBehaviour {
 
 	private void RotateCamera(Vector3 newRotation){
 		if (cam != null) {
+			Vector3 clampedEuler = cam.transform.eulerAngles;
+			clampedEuler.x = Mathf.Clamp (clampedEuler.x,-90,90);
+			cam.transform.eulerAngles = clampedEuler;
 			cam.transform.Rotate(-newRotation);
 		}
 	}
@@ -64,10 +68,12 @@ public class Player : MonoBehaviour {
 		}
 	}
 
+#region DEBUGGING
 	void OnDrawGizmos(){
 		Gizmos.color = Color.red;
 		Gizmos.DrawWireSphere(new Vector3 (collider.transform.position.x,collider.transform.position.y - (collider.bounds.extents.y+collider.bounds.size.y/48), collider.transform.position.z), 0.1f);
 	}
+#endregion
 
 	private void HandleInput(){
 		float x = Input.GetAxis ("Horizontal");
@@ -90,13 +96,12 @@ public class Player : MonoBehaviour {
 		velocity = (xVelocity + zVelocity).normalized * speed;// Combine the vectors and normalize them, multiply by speed
 
 		float mouseY = Input.GetAxisRaw ("Mouse X") * sensitivity; //These lines calculate the turning rotation of the player on the x-axis
-		mouseY = Mathf.SmoothDamp (currentRotationX, mouseY, ref xRotationVel, 0.01f);
+		//mouseY = Mathf.SmoothDamp (currentRotationX, mouseY, ref xRotationVel, 0.01f);
 		rotation = new Vector3 (0, mouseY, 0);
 
 
-		float mouseX = Input.GetAxisRaw ("Mouse Y") * sensitivity; //These lines calculate the turning rotation of the camera on the y-axis
-		mouseY = Mathf.SmoothDamp (currentRotationY, mouseX, ref yRotationVel, 0.01f);
-		mouseX = Mathf.Clamp (mouseX, -90, 90);
+		float mouseX = Input.GetAxis ("Mouse Y") * sensitivity; //These lines calculate the turning rotation of the camera on the y-axis
+		//mouseX = Mathf.SmoothDamp (currentRotationY, mouseX, ref yRotationVel, 0.01f);
 		cameraRotation = new Vector3 (mouseX, 0, 0);
 
 		//INVENTORY MANAGEMENT

@@ -41,6 +41,7 @@ public class Enemy : MonoBehaviour {
 		switch (col.gameObject.tag) {
 			case "Bullet":
 				Hit(col.gameObject.GetComponent<Projectile>().damage);
+				Destroy (col.gameObject);
 			break;
 		}
 	}

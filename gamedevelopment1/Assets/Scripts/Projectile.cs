@@ -21,6 +21,8 @@ public class Projectile : MonoBehaviour {
 	}
 
 	void OnCollisionEnter(Collision col){
-		Destroy (gameObject);
+		if (gameObject.tag != "Enemy") {
+			Destroy (gameObject);
+		}
 	}
 }
