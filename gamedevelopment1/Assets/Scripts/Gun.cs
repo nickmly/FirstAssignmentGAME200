@@ -52,6 +52,7 @@ public class Gun : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
+		Cursor.lockState = CursorLockMode.Locked;
 		canShoot = true; // We can shoot
 		reloading = false; // Not reloading
 		pumping = false; // Not pumping
@@ -178,7 +179,7 @@ public class Gun : MonoBehaviour {
 		ammo = 0;
 	}
 
-	private void ResetGun(){
+	public void ResetGun(){
 		anim.applyRootMotion = true;
 		if (!isADS) {
 			currentPos = stillPos;

@@ -11,8 +11,12 @@ public class Player : MonoBehaviour {
 	[SerializeField] private GameObject secondaryWeapon;
 	[SerializeField] private HUDManager hud;
 	[SerializeField] private BoxCollider collider;
+	[SerializeField] private Gun gun;
+
+	public bool isRunning = false;
 
 	private GameObject currentWeapon;
+	private Animator gunAnim;
 	private CharacterController cc;
 	private float normalSpeed;
 	private Rigidbody rb;
@@ -21,6 +25,9 @@ public class Player : MonoBehaviour {
 	private float yRotationVel = 0.0f;
 	private float currentRotationX = 0.0f;
 	private float currentRotationY = 0.0f;
+	private float vaultTimer,maxVaultTimer;
+	private bool isVaulting = false;
+	private bool hasJumped = false;
 	
 	void Start () {
 		rb = GetComponent<Rigidbody> ();
@@ -30,14 +37,42 @@ public class Player : MonoBehaviour {
 		normalSpeed = speed;
 		cc = GetComponent<CharacterController> ();
 		currentWeapon = GameObject.FindGameObjectWithTag ("Gun");
+		vaultTimer = 0.3f;
+		maxVaultTimer = vaultTimer;
+		gun = currentWeapon.GetComponent<Gun> ();
+		hud.gun = gun;
+		gunAnim = gun.GetComponent<Animator> ();
+	}
+
+	void FixedUpdate(){
+		HandleInput ();
+
+		if (hasJumped) {
+			if(CanVault()){
+				isVaulting = true;
+				gunAnim.applyRootMotion = false;
+				gunAnim.SetBool("vaulting",true);
+			}
+		}
+		if (isVaulting) {
+			Vault ();
+		}
 	}
 
 	void Update () {
-		HandleInput ();
 		Move (velocity);
 		Rotate (rotation);
 		RotateCamera (cameraRotation);
+		if (IsGrounded ()) {
+			hasJumped = false;
+		}
+	}
 
+	private void GetNewGun(){
+		currentWeapon.transform.parent = transform.GetChild(0);
+		hud.gun = currentWeapon.GetComponent<Gun>();
+		gun = currentWeapon.GetComponent<Gun> ();
+		gunAnim = gun.GetComponent<Animator> ();
 	}
 
 	private void Move(Vector3 newVelocity){
@@ -53,14 +88,13 @@ public class Player : MonoBehaviour {
 		if (cam != null) {
 			Vector3 clampedEuler = cam.transform.eulerAngles;
 			clampedEuler.x = Mathf.Clamp (clampedEuler.x,-90,90);
-			cam.transform.eulerAngles = clampedEuler;
+			//cam.transform.eulerAngles = clampedEuler;
 			cam.transform.Rotate(-newRotation);
 		}
 	}
 
 	private bool IsGrounded(){
 		Collider[] collisions = Physics.OverlapSphere (new Vector3 (collider.transform.position.x,collider.transform.position.y - (collider.bounds.extents.y+collider.bounds.size.y/8), collider.transform.position.z), 0.1f);
-		Debug.Log (collisions.Length);
 		if (collisions.Length > 0) {
 			return true;
 		} else {
@@ -68,10 +102,40 @@ public class Player : MonoBehaviour {
 		}
 	}
 
+	private bool CanVault(){
+		int layerMask = 1 << 8;
+		Collider[] collisions = Physics.OverlapSphere (new Vector3 (collider.transform.position.x,collider.transform.position.y - (collider.bounds.extents.y+collider.bounds.size.y/8), collider.transform.position.z), 2f,layerMask);
+		if (collisions.Length > 0) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	private void Vault(){
+		zVelocity = Vector3.zero;
+		if (vaultTimer > 0) {
+			vaultTimer -= Time.deltaTime;
+		} else {
+			Debug.Log ("Vault");
+			gunAnim.SetBool("vaulting",false);
+			isVaulting = false;
+			vaultTimer = maxVaultTimer;
+			if(!isRunning){
+				rb.AddForce(transform.forward * jumpHeight/2);
+			} else {
+				rb.AddForce(transform.forward * jumpHeight/2);
+			}
+
+			//velocity = transform.forward * 2.5f;
+		}
+	}
+
 #region DEBUGGING
 	void OnDrawGizmos(){
 		Gizmos.color = Color.red;
-		Gizmos.DrawWireSphere(new Vector3 (collider.transform.position.x,collider.transform.position.y - (collider.bounds.extents.y+collider.bounds.size.y/48), collider.transform.position.z), 0.1f);
+		Gizmos.DrawWireSphere(new Vector3 (collider.transform.position.x,collider.transform.position.y - (collider.bounds.extents.y+collider.bounds.size.y/8), collider.transform.position.z), 0.1f);
+		//Gizmos.DrawWireSphere(transform.forward * 2.5f, 1f);
 	}
 #endregion
 
@@ -81,17 +145,30 @@ public class Player : MonoBehaviour {
 
 		if (Input.GetKeyDown (KeyCode.LeftShift)) {
 			speed *= 1.5f;
+			isRunning = true;
 		}
 		if (Input.GetKeyUp (KeyCode.LeftShift)) {
 			speed = normalSpeed;
+			isRunning = false;
 		}
 
 		if (Input.GetKeyDown (KeyCode.Space) && IsGrounded()) {
-			rb.AddForce(new Vector3(0,jumpHeight,0));
+			if(!isVaulting && !hasJumped){
+				rb.AddForce(new Vector3(0,jumpHeight,0));
+				hasJumped = true;
+				Debug.Log ("jump");
+			}
+
+
+			//if(CanVault()){
+			//	isVaulting = true;
+			//}
 		}
 
 		xVelocity = transform.right * x;
-		zVelocity = transform.forward * z;
+		if(!isVaulting){
+			zVelocity = transform.forward * z;
+		}
 
 		velocity = (xVelocity + zVelocity).normalized * speed;// Combine the vectors and normalize them, multiply by speed
 
@@ -108,15 +185,13 @@ public class Player : MonoBehaviour {
 		if (Input.GetKeyDown (KeyCode.Alpha1)) {
 			Destroy (currentWeapon);
 			currentWeapon = Instantiate(primaryWeapon,transform.position,transform.rotation) as GameObject;
-			currentWeapon.transform.parent = transform.GetChild(0);
-			hud.gun = currentWeapon.GetComponent<Gun>();
+			GetNewGun();
 		}
 		
 		if (Input.GetKeyDown (KeyCode.Alpha2)) {
 			Destroy (currentWeapon);
 			currentWeapon = Instantiate(secondaryWeapon,transform.position,transform.rotation) as GameObject;
-			currentWeapon.transform.parent = transform.GetChild(0);
-			hud.gun = currentWeapon.GetComponent<Gun>();
+			GetNewGun();
 		}
 	}
 }
