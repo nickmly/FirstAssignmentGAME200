@@ -1,6 +1,8 @@
 ﻿using UnityEngine;
 using System.Collections;
 
+
+//TODO: bug in jump not always working related to rigidbody stuck in wall; make function that prevents this
 public class Player : MonoBehaviour {
 
 	[SerializeField] private float speed;
@@ -57,10 +59,12 @@ public class Player : MonoBehaviour {
 		if (isVaulting) {
 			Vault ();
 		}
+	
+		Move (velocity);
 	}
 
 	void Update () {
-		Move (velocity);
+
 		Rotate (rotation);
 		RotateCamera (cameraRotation);
 		if (IsGrounded ()) {
@@ -112,12 +116,39 @@ public class Player : MonoBehaviour {
 		}
 	}
 
+	private bool IsColliding(string side, int layerID){
+		Vector3 fwd = transform.TransformDirection (Vector3.forward);
+		Vector3 bkd = transform.TransformDirection (-Vector3.forward);
+
+		Vector3 left = transform.TransformDirection (-Vector3.right);
+		Vector3 right = transform.TransformDirection (Vector3.right);
+
+		float dist = 1.5f;
+
+		switch (side) {
+			case "forward":
+				return Physics.Raycast(collider.transform.position,fwd,dist,1 << layerID);
+			break;
+			case "backward":
+				return Physics.Raycast(collider.transform.position,bkd,dist,1 << layerID);
+			break;
+			case "left":
+				return Physics.Raycast(collider.transform.position,left,dist,1 << layerID);
+			break;
+			case "right":
+				return Physics.Raycast(collider.transform.position,right,dist,1 << layerID);
+			break;
+			default:
+				return false;
+			break;
+		}
+	}
+
 	private void Vault(){
 		zVelocity = Vector3.zero;
 		if (vaultTimer > 0) {
 			vaultTimer -= Time.deltaTime;
 		} else {
-			Debug.Log ("Vault");
 			gunAnim.SetBool("vaulting",false);
 			isVaulting = false;
 			vaultTimer = maxVaultTimer;
@@ -133,6 +164,8 @@ public class Player : MonoBehaviour {
 
 #region DEBUGGING
 	void OnDrawGizmos(){
+
+
 		Gizmos.color = Color.red;
 		Gizmos.DrawWireSphere(new Vector3 (collider.transform.position.x,collider.transform.position.y - (collider.bounds.extents.y+collider.bounds.size.y/8), collider.transform.position.z), 0.1f);
 		//Gizmos.DrawWireSphere(transform.forward * 2.5f, 1f);
@@ -140,11 +173,24 @@ public class Player : MonoBehaviour {
 #endregion
 
 	private void HandleInput(){
-		float x = Input.GetAxis ("Horizontal");
-		float z = Input.GetAxis ("Vertical");
+		float x = 0;
+		float z = 0;
+		if (Input.GetKey (KeyCode.W) && !IsColliding("forward",8) && !isVaulting) {
+			z = 1;
+		}
+		if (Input.GetKey (KeyCode.S) && !IsColliding("backward",8)) {
+			z = -1;
+		}
+		if (Input.GetKey (KeyCode.D) && !IsColliding("right",8)) {
+			x = 1;
+		}
+		if (Input.GetKey (KeyCode.A) && !IsColliding("left",8)) {
+			x = -1;
+		}
+
 
 		if (Input.GetKeyDown (KeyCode.LeftShift)) {
-			speed *= 1.5f;
+			speed = normalSpeed * 1.5f;
 			isRunning = true;
 		}
 		if (Input.GetKeyUp (KeyCode.LeftShift)) {
@@ -152,23 +198,15 @@ public class Player : MonoBehaviour {
 			isRunning = false;
 		}
 
-		if (Input.GetKeyDown (KeyCode.Space) && IsGrounded()) {
-			if(!isVaulting && !hasJumped){
-				rb.AddForce(new Vector3(0,jumpHeight,0));
+		if (Input.GetKeyDown (KeyCode.Space) && IsGrounded ()) {
+			if (!isVaulting && !hasJumped) {
+				rb.AddForce (new Vector3 (0, jumpHeight, 0));
 				hasJumped = true;
-				Debug.Log ("jump");
 			}
-
-
-			//if(CanVault()){
-			//	isVaulting = true;
-			//}
 		}
 
 		xVelocity = transform.right * x;
-		if(!isVaulting){
-			zVelocity = transform.forward * z;
-		}
+		zVelocity = transform.forward * z;
 
 		velocity = (xVelocity + zVelocity).normalized * speed;// Combine the vectors and normalize them, multiply by speed
 
@@ -180,6 +218,7 @@ public class Player : MonoBehaviour {
 		float mouseX = Input.GetAxis ("Mouse Y") * sensitivity; //These lines calculate the turning rotation of the camera on the y-axis
 		//mouseX = Mathf.SmoothDamp (currentRotationY, mouseX, ref yRotationVel, 0.01f);
 		cameraRotation = new Vector3 (mouseX, 0, 0);
+
 
 		//INVENTORY MANAGEMENT
 		if (Input.GetKeyDown (KeyCode.Alpha1)) {
