@@ -2,12 +2,11 @@
 using System.Collections;
 
 
-//TODO: bug in jump not always working related to rigidbody stuck in wall; make function that prevents this
 public class Player : MonoBehaviour {
 
 	[SerializeField] private float speed;
 	[SerializeField] private float jumpHeight;
-	[SerializeField] private float sensitivity;
+	[SerializeField] public float sensitivity;
 	[SerializeField] private Camera cam;
 	[SerializeField] private GameObject primaryWeapon;
 	[SerializeField] private GameObject secondaryWeapon;
@@ -16,13 +15,15 @@ public class Player : MonoBehaviour {
 	[SerializeField] private Gun gun;
 
 	public bool isRunning = false;
+	public bool isWalking = false;
 
 	private GameObject currentWeapon;
 	private Animator gunAnim;
 	private CharacterController cc;
 	private float normalSpeed;
 	private Rigidbody rb;
-	private Vector3 xVelocity, zVelocity, velocity, rotation, cameraRotation;
+	private Vector3 xVelocity, zVelocity, rotation, cameraRotation;
+	public Vector3 velocity;
 	private float xRotationVel = 0.0f;
 	private float yRotationVel = 0.0f;
 	private float currentRotationX = 0.0f;
@@ -41,9 +42,11 @@ public class Player : MonoBehaviour {
 		currentWeapon = GameObject.FindGameObjectWithTag ("Gun");
 		vaultTimer = 0.3f;
 		maxVaultTimer = vaultTimer;
-		gun = currentWeapon.GetComponent<Gun> ();
-		hud.gun = gun;
-		gunAnim = gun.GetComponent<Animator> ();
+		if (currentWeapon != null) {
+			gun = currentWeapon.GetComponent<Gun> ();
+			hud.gun = gun;
+			gunAnim = gun.GetComponent<Animator> ();
+		}
 	}
 
 	void FixedUpdate(){
@@ -52,8 +55,10 @@ public class Player : MonoBehaviour {
 		if (hasJumped) {
 			if(CanVault()){
 				isVaulting = true;
-				gunAnim.applyRootMotion = false;
-				gunAnim.SetBool("vaulting",true);
+				if(gunAnim != null){
+					gunAnim.applyRootMotion = false;
+					gunAnim.SetBool("vaulting",true);
+				}
 			}
 		}
 		if (isVaulting) {
@@ -77,6 +82,35 @@ public class Player : MonoBehaviour {
 		hud.gun = currentWeapon.GetComponent<Gun>();
 		gun = currentWeapon.GetComponent<Gun> ();
 		gunAnim = gun.GetComponent<Animator> ();
+		gun.player = this;
+	}
+
+	private void PickupGun(string newGunType){	
+		string currentGun = "";
+		string primaryGun = "";
+		string secondaryGun = "";
+		if (currentWeapon != null) {
+			currentGun = currentWeapon.GetComponent<Gun> ().gunType;
+			if(primaryWeapon != null){
+				primaryGun = primaryWeapon.GetComponent<Gun> ().gunType;
+			}
+			if(secondaryWeapon != null){
+				secondaryGun = secondaryWeapon.GetComponent<Gun> ().gunType;
+			}
+		}
+		if (currentGun != newGunType) {
+			if(primaryGun != newGunType && secondaryWeapon != null){
+				Destroy (currentWeapon);
+				primaryWeapon = Resources.Load<GameObject>("Prefabs/" + newGunType);
+				currentWeapon = Instantiate(primaryWeapon,transform.position,transform.rotation) as GameObject;
+				GetNewGun();
+			} else {
+				Destroy (currentWeapon);
+				secondaryWeapon = Resources.Load<GameObject>("Prefabs/" + newGunType);
+				currentWeapon = Instantiate(secondaryWeapon,transform.position,transform.rotation) as GameObject;
+				GetNewGun();
+			}
+		}
 	}
 
 	private void Move(Vector3 newVelocity){
@@ -98,7 +132,9 @@ public class Player : MonoBehaviour {
 	}
 
 	private bool IsGrounded(){
-		Collider[] collisions = Physics.OverlapSphere (new Vector3 (collider.transform.position.x,collider.transform.position.y - (collider.bounds.extents.y+collider.bounds.size.y/8), collider.transform.position.z), 0.1f);
+		Collider[] collisions = Physics.OverlapSphere (new Vector3 (collider.transform.position.x,
+		                                                            collider.transform.position.y - (collider.bounds.extents.y+collider.bounds.size.y/8),
+		                                                            collider.transform.position.z), 0.1f);
 		if (collisions.Length > 0) {
 			return true;
 		} else {
@@ -108,7 +144,10 @@ public class Player : MonoBehaviour {
 
 	private bool CanVault(){
 		int layerMask = 1 << 8;
-		Collider[] collisions = Physics.OverlapSphere (new Vector3 (collider.transform.position.x,collider.transform.position.y - (collider.bounds.extents.y+collider.bounds.size.y/8), collider.transform.position.z), 2f,layerMask);
+		Collider[] collisions = Physics.OverlapSphere (new Vector3 (collider.transform.position.x,
+		                                                            collider.transform.position.y - 
+		                                                            (collider.bounds.extents.y+collider.bounds.size.y/8),
+		                                                            collider.transform.position.z), 2f,layerMask);
 		if (collisions.Length > 0) {
 			return true;
 		} else {
@@ -149,7 +188,9 @@ public class Player : MonoBehaviour {
 		if (vaultTimer > 0) {
 			vaultTimer -= Time.deltaTime;
 		} else {
-			gunAnim.SetBool("vaulting",false);
+			if(gunAnim != null){
+				gunAnim.SetBool("vaulting",false);
+			}
 			isVaulting = false;
 			vaultTimer = maxVaultTimer;
 			if(!isRunning){
@@ -167,7 +208,9 @@ public class Player : MonoBehaviour {
 
 
 		Gizmos.color = Color.red;
-		Gizmos.DrawWireSphere(new Vector3 (collider.transform.position.x,collider.transform.position.y - (collider.bounds.extents.y+collider.bounds.size.y/8), collider.transform.position.z), 0.1f);
+		Gizmos.DrawWireSphere(new Vector3 (collider.transform.position.x,
+		                                   collider.transform.position.y - (collider.bounds.extents.y+
+		                                 collider.bounds.size.y/8), collider.transform.position.z), 0.1f);
 		//Gizmos.DrawWireSphere(transform.forward * 2.5f, 1f);
 	}
 #endregion
@@ -177,25 +220,36 @@ public class Player : MonoBehaviour {
 		float z = 0;
 		if (Input.GetKey (KeyCode.W) && !IsColliding("forward",8) && !isVaulting) {
 			z = 1;
+			isWalking = true;
 		}
 		if (Input.GetKey (KeyCode.S) && !IsColliding("backward",8)) {
 			z = -1;
+			isWalking = true;
 		}
 		if (Input.GetKey (KeyCode.D) && !IsColliding("right",8)) {
 			x = 1;
+			isWalking = true;
 		}
 		if (Input.GetKey (KeyCode.A) && !IsColliding("left",8)) {
 			x = -1;
+			isWalking = true;
+		}
+
+		if (Input.GetKeyUp (KeyCode.W) || Input.GetKeyUp (KeyCode.A) 
+		    || Input.GetKeyUp (KeyCode.S) || Input.GetKeyUp (KeyCode.D)) {
+			isWalking = false;
 		}
 
 
-		if (Input.GetKeyDown (KeyCode.LeftShift)) {
+		if (Input.GetKeyDown (KeyCode.LeftShift) && isWalking) {
 			speed = normalSpeed * 1.5f;
 			isRunning = true;
+			isWalking = false;
 		}
 		if (Input.GetKeyUp (KeyCode.LeftShift)) {
 			speed = normalSpeed;
 			isRunning = false;
+			isWalking = false;
 		}
 
 		if (Input.GetKeyDown (KeyCode.Space) && IsGrounded ()) {
@@ -221,16 +275,34 @@ public class Player : MonoBehaviour {
 
 
 		//INVENTORY MANAGEMENT
-		if (Input.GetKeyDown (KeyCode.Alpha1)) {
+		if (Input.GetKeyDown (KeyCode.Alpha1) && primaryWeapon != null) {
 			Destroy (currentWeapon);
 			currentWeapon = Instantiate(primaryWeapon,transform.position,transform.rotation) as GameObject;
 			GetNewGun();
 		}
 		
-		if (Input.GetKeyDown (KeyCode.Alpha2)) {
+		if (Input.GetKeyDown (KeyCode.Alpha2) && secondaryWeapon != null) {
 			Destroy (currentWeapon);
 			currentWeapon = Instantiate(secondaryWeapon,transform.position,transform.rotation) as GameObject;
 			GetNewGun();
+		}
+	}
+
+	
+	void OnCollisionStay(Collision col){
+		if (col.gameObject.tag == "Pickup") {
+			hud.ShowUseText ("F", "pickup " + col.gameObject.GetComponent<Pickup> ().gunType);
+			if (Input.GetKeyDown (KeyCode.F)) {
+				hud.use.enabled = false;
+				PickupGun (col.gameObject.GetComponent<Pickup> ().gunType);
+				Destroy (col.gameObject);
+			}
+		}
+	}
+
+	void OnCollisionExit(Collision col){
+		if (col.gameObject.tag == "Pickup") {
+			hud.use.enabled = false;
 		}
 	}
 }

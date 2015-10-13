@@ -8,14 +8,19 @@ public class Gun : MonoBehaviour {
 	[SerializeField] private Vector3 stillPos;
 	[SerializeField] private Vector3 sightPos;
 	[SerializeField] private Vector3 stillRotation;
-	[SerializeField] private float recoilAmount;
+	[SerializeField] private float recoilAmount, walkIntensity;
 	[SerializeField] private float damage;
 	[SerializeField] private bool shotgun;
 	[SerializeField] private float lerpSpeed;
 
+
+	public string gunType;
 	private float sprintTimer = 0.333f;
 	private float maxFireRate;
 	private float maxReloadTime;
+	private float walkTimer = 0.2f;
+	private float maxWalkTimer;
+	private int walkDecision = 0;
 	private float bulletSpeed = 200f;
 	private float flashDuration = 0.015f;
 	private float maxFlashDuration = 0.015f;
@@ -23,6 +28,7 @@ public class Gun : MonoBehaviour {
 	private bool canShoot, pumping;
 	private Animator anim;
 	private Vector3 recoilPos, currentPos;
+	private float swayX, swayY;
 	
 	private bool reloading;
 	private bool isADS;
@@ -30,6 +36,7 @@ public class Gun : MonoBehaviour {
 	public Rigidbody bulletPrefab, shellPrefab;
 	public Transform bulletExitPoint, shellExitPoint;
 	public SpriteRenderer flash;
+	public Player player;
 
 	public int ammo;
 	private int maxAmmo;
@@ -58,11 +65,12 @@ public class Gun : MonoBehaviour {
 		pumping = false; // Not pumping
 		isADS = false; // Not aiming
 		maxAmmo = ammo; //Set up our max variables for resetting them later
-		maxFireRate = fireRate;//////
+		maxFireRate = fireRate;//////////
 		maxReloadTime = reloadTime;//////
+		maxWalkTimer = walkTimer;////////
 		fakeMousePos = new Vector3 (Screen.width / 2, Screen.height / 2, Input.mousePosition.z); // Fake mouse pos used is placed in center of screen
 		anim = GetComponent<Animator> ();
-		transform.localPosition = stillPos;
+		transform.localPosition = new Vector3 (stillPos.x, stillPos.y - 2, stillPos.z);
 		currentPos = transform.localPosition;
 		transform.localRotation = new Quaternion (stillRotation.x, stillRotation.y, stillRotation.z, transform.localRotation.w);
 		//stillPos = new Vector3 (transform.localPosition.x, transform.localPosition.y, transform.localPosition.z);
@@ -74,6 +82,23 @@ public class Gun : MonoBehaviour {
 	void Update () {
 		transform.localPosition = Vector3.Lerp (transform.localPosition, currentPos, lerpSpeed);
 
+		float mouseY = Input.GetAxis ("Mouse X") * player.sensitivity;
+		float mouseX = Input.GetAxis ("Mouse Y") * player.sensitivity;
+
+		swayX = Mathf.SmoothDamp (swayX, mouseX, ref player.velocity.x, 2f * Time.deltaTime);
+		swayY = Mathf.SmoothDamp (swayY, mouseY, ref player.velocity.y, 2f * Time.deltaTime);
+
+		Quaternion rotValue = Quaternion.Euler (new Vector3 (swayX, swayY, 0));
+
+		transform.localRotation = Quaternion.Lerp (transform.localRotation, rotValue, 2.5f * Time.deltaTime);
+		if (player.isWalking) {
+			if(walkTimer > 0){
+				walkTimer -= Time.deltaTime;
+			} else {
+				walkTimer = maxWalkTimer;
+				Walk ();
+			}
+		}
 		if (Input.GetKey (KeyCode.LeftShift)) {
 			canShoot = false;
 			anim.applyRootMotion = false;
@@ -109,6 +134,24 @@ public class Gun : MonoBehaviour {
 			if (!canShoot) {
 				PrepareGunForFiring ();
 			}
+		}
+	}
+
+	private void Walk(){
+		if (walkDecision == 0) {
+			if(!isADS){
+				currentPos = new Vector3(currentPos.x,stillPos.y-walkIntensity,currentPos.z);
+			} else {
+				currentPos = new Vector3(currentPos.x,sightPos.y-walkIntensity/2,currentPos.z);
+			}
+			walkDecision = 1;
+		} else {
+			if(!isADS){
+				currentPos = new Vector3(currentPos.x,stillPos.y+walkIntensity,currentPos.z);
+			} else {
+				currentPos = new Vector3(currentPos.x,sightPos.y+walkIntensity/2,currentPos.z);
+			}
+			walkDecision = 0;
 		}
 	}
 
@@ -233,4 +276,5 @@ public class Gun : MonoBehaviour {
 			transform.localRotation = new Quaternion (stillRotation.x, stillRotation.y, stillRotation.z, transform.localRotation.w);
 		}
 	}
+
 }

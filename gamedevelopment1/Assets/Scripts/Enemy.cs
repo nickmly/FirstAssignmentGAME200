@@ -11,7 +11,7 @@ public class Enemy : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-	
+		target = GameObject.Find ("FPSController"); //temporary
 	}
 	
 	// Update is called once per frame
