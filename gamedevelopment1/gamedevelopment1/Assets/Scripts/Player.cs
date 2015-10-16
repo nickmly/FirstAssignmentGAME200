@@ -285,7 +285,7 @@ public class Player : MonoBehaviour {
 			Destroy (currentWeapon);
 			currentWeapon = Instantiate(secondaryWeapon,transform.position,transform.rotation) as GameObject;
 			GetNewGun();
-		}
+		}//TODO: gameobject.active for weapons 
 	}
 
 	

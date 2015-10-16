@@ -23,6 +23,7 @@ public class Gun : MonoBehaviour {
 	private float walkTimer = 0.2f;
 	private float maxWalkTimer;
 	private int walkDecision = 0;
+	private float normalRecoilAmount;
 	private float bulletSpeed = 100f;
 	private float flashDuration = 0.015f;
 	private float maxFlashDuration = 0.015f;
@@ -72,6 +73,7 @@ public class Gun : MonoBehaviour {
 		maxFireRate = fireRate;//////////
 		maxReloadTime = reloadTime;//////
 		maxWalkTimer = walkTimer;////////
+		normalRecoilAmount = recoilAmount;//////
 		fakeMousePos = new Vector3 (Screen.width / 2, Screen.height / 2, Input.mousePosition.z); // Fake mouse pos used is placed in center of screen
 		anim = GetComponent<Animator> ();
 		transform.localPosition = new Vector3 (stillPos.x, stillPos.y - 2, stillPos.z);
@@ -123,7 +125,13 @@ public class Gun : MonoBehaviour {
 			currentPos = stillPos;
 			isADS = false;
 		}
-
+		
+		if(isADS){
+			recoilAmount = normalRecoilAmount/2;
+		} else {
+			recoilAmount = normalRecoilAmount;
+		}
+		
 		if (Input.GetKey (KeyCode.Mouse0) && canShoot && ammo > 0 && mags >= 0) { //Fire the gun with left mouse button
 			FireGun();
 		}
@@ -144,7 +152,7 @@ public class Gun : MonoBehaviour {
 		}
 	}
 
-	private void Walk(){
+	private void Walk(){//TODO: move this to player and affect the camera
 		if (walkDecision == 0) {
 			if(!isADS){
 				currentPos = new Vector3(currentPos.x,stillPos.y-walkIntensity,currentPos.z);
