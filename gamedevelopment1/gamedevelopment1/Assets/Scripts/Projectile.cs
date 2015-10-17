@@ -21,7 +21,7 @@ public class Projectile : MonoBehaviour {
 	}
 
 	void OnCollisionEnter(Collision col){
-		if (gameObject.tag != "Enemy" && gameObject.tag != "Bullet") {
+		if (col.gameObject.tag != "Enemy" && col.gameObject.tag != "Bullet") {
 			Destroy (gameObject);
 		}
 	}

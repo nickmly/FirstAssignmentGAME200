@@ -168,6 +168,7 @@ public class Gun : MonoBehaviour {
 			}
 			walkDecision = 0;
 		}
+		player.isWalking = false;
 	}
 
 	private void FireGun(){

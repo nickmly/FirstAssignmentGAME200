@@ -52,8 +52,10 @@ public class Player : MonoBehaviour {
 	void FixedUpdate(){
 		HandleInput ();
 
-		if (hasJumped) {
+		if (IsColliding("forward",8)) {
 			if(CanVault()){
+				rb.velocity = new Vector3(0,6f,0);
+				hasJumped = true;
 				isVaulting = true;
 				if(gunAnim != null){
 					gunAnim.applyRootMotion = false;
@@ -166,7 +168,11 @@ public class Player : MonoBehaviour {
 
 		switch (side) {
 			case "forward":
-				return Physics.Raycast(collider.transform.position,fwd,dist,1 << layerID);
+				if(Physics.Raycast(collider.transform.position,fwd,dist,1 << layerID)){
+					return Physics.Raycast(collider.transform.position,fwd,dist,1 << layerID);
+				} else {
+					return Physics.Raycast(new Vector3(collider.transform.position.x,collider.transform.position.y-collider.bounds.extents.y/2,collider.transform.position.z),fwd,dist,1 << layerID);
+				}				
 			break;
 			case "backward":
 				return Physics.Raycast(collider.transform.position,bkd,dist,1 << layerID);
@@ -183,6 +189,7 @@ public class Player : MonoBehaviour {
 		}
 	}
 
+
 	private void Vault(){
 		zVelocity = Vector3.zero;
 		if (vaultTimer > 0) {
@@ -193,10 +200,12 @@ public class Player : MonoBehaviour {
 			}
 			isVaulting = false;
 			vaultTimer = maxVaultTimer;
-			if(!isRunning){
-				rb.AddForce(transform.forward * jumpHeight/2);
-			} else {
-				rb.AddForce(transform.forward * jumpHeight/2);
+			if(!IsColliding("forward",8)){
+				if(!isRunning){
+					rb.AddForce(transform.forward * jumpHeight/2);
+				} else {
+					rb.AddForce(transform.forward * jumpHeight/2);
+				}
 			}
 
 			//velocity = transform.forward * 2.5f;
@@ -205,13 +214,15 @@ public class Player : MonoBehaviour {
 
 #region DEBUGGING
 	void OnDrawGizmos(){
-
+		Vector3 fwd = transform.TransformDirection (Vector3.forward);
 
 		Gizmos.color = Color.red;
 		Gizmos.DrawWireSphere(new Vector3 (collider.transform.position.x,
 		                                   collider.transform.position.y - (collider.bounds.extents.y+
 		                                 collider.bounds.size.y/8), collider.transform.position.z), 0.1f);
-		//Gizmos.DrawWireSphere(transform.forward * 2.5f, 1f);
+		Gizmos.DrawRay (collider.transform.position, fwd);
+		Gizmos.color = Color.yellow;
+		Gizmos.DrawRay(new Vector3(collider.transform.position.x,collider.transform.position.y-collider.bounds.extents.y/2,collider.transform.position.z),fwd);
 	}
 #endregion
 
