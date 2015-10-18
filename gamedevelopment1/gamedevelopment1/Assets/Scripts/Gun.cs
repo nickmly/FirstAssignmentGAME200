@@ -13,8 +13,9 @@ public class Gun : MonoBehaviour {
 	[SerializeField] private bool shotgun;
 	[SerializeField] private float lerpSpeed;
 	[SerializeField] private bool hasScope = false;
-
-
+	[SerializeField] private bool extendableStock = false;
+	[SerializeField] private Vector3 extendedPosition;
+	
 	public int mags = 5;
 	public string gunType;
 	private float sprintTimer = 0.333f;
@@ -37,8 +38,8 @@ public class Gun : MonoBehaviour {
 	private bool isADS;
 
 	public Rigidbody bulletPrefab, shellPrefab;
-	public Transform bulletExitPoint, shellExitPoint;
-	public SpriteRenderer flash;
+	public Transform bulletExitPoint, shellExitPoint, stock;
+	public GameObject flash;
 	public Player player;
 
 	public int ammo;
@@ -132,6 +133,11 @@ public class Gun : MonoBehaviour {
 			recoilAmount = normalRecoilAmount;
 		}
 		
+		if(Input.GetKeyDown(KeyCode.G) && extendableStock){
+			anim.SetBool("extending",true);
+			anim.applyRootMotion = false;
+		}
+		
 		if (Input.GetKey (KeyCode.Mouse0) && canShoot && ammo > 0 && mags >= 0) { //Fire the gun with left mouse button
 			FireGun();
 		}
@@ -175,8 +181,8 @@ public class Gun : MonoBehaviour {
 		ammo--;
 		recoilPos = new Vector3 (transform.localPosition.x, transform.localPosition.y, transform.localPosition.z - recoilAmount);
 		currentPos = recoilPos;
-		flash.enabled = true;
-		flash.gameObject.GetComponent<Light> ().enabled = true;
+		flash.SetActive(true);
+		//flash.GetComponent<ParticleSystem>().Play();
 		flashDuration = maxFlashDuration;
 		canShoot = false;
 		Ray mousePos = Camera.main.ScreenPointToRay (fakeMousePos); // Point at center of screen
@@ -232,8 +238,8 @@ public class Gun : MonoBehaviour {
 		} else{ 
 			currentPos = stillPos;
 		}
-		flash.enabled = false;
-		flash.gameObject.GetComponent<Light> ().enabled = false;
+		flash.SetActive(false);
+		//flash.gameObject.GetComponent<ParticleSystem> ().Stop();
 		anim.applyRootMotion = false;
 		canShoot = false;
 		anim.SetBool ("reloading", true);
@@ -263,8 +269,8 @@ public class Gun : MonoBehaviour {
 				currentPos = stillPos;
 			}
 			flashDuration = maxFlashDuration;
-			flash.enabled = false;
-			flash.gameObject.GetComponent<Light> ().enabled = false;
+			flash.SetActive(false);
+			//flash.gameObject.GetComponent<ParticleSystem> ().Stop();
 		}
 		if (fireRate > 0) {
 			fireRate -= Time.deltaTime;
@@ -282,6 +288,24 @@ public class Gun : MonoBehaviour {
 			fireRate = maxFireRate;
 			//anim.SetBool ("shooting", false);
 		}
+	}
+	
+	private void FinishExtend(){
+		anim.SetBool("extending",false);
+		normalRecoilAmount /= 2;
+		recoilAmount = normalRecoilAmount;
+		anim.applyRootMotion = true;
+		stock.position = extendedPosition;
+	}
+	
+	private void FinishReload(){
+		ammo = maxAmmo;
+		canShoot = true;
+		reloading = false;
+		reloadTime = maxReloadTime;
+		anim.SetBool("reloading",false);
+		anim.applyRootMotion = true;
+		transform.localRotation = new Quaternion (stillRotation.x, stillRotation.y, stillRotation.z, transform.localRotation.w);
 	}
 
 	private void PerformReloadAnim(){

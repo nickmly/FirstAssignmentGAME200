@@ -54,7 +54,7 @@ public class Player : MonoBehaviour {
 
 		if (IsColliding("forward",8)) {
 			if(CanVault()){
-				rb.velocity = new Vector3(0,6f,0);
+				rb.velocity = new Vector3(0,4f,0);
 				hasJumped = true;
 				isVaulting = true;
 				if(gunAnim != null){

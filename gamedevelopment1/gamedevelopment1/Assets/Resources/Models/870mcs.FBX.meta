@@ -1,43 +1,87 @@
 fileFormatVersion: 2
-guid: c79191e564080dc478cee9f603c1a7dc
-timeCreated: 1444406610
-licenseType: Free
+guid: 84ebce56c00b27b42957bcad6f20cd6b
+timeCreated: 1445143831
+licenseType: Pro
 ModelImporter:
   serializedVersion: 18
   fileIDToRecycleName:
     100000: //RootNode
-    100002: 870mcs
-    100004: 870mcs_12 gauge round
-    100006: 870mcs_bolt
-    100008: 870mcs_pump
-    100010: 870mcs_side shells
-    100012: 870mcs_top rail
+    100002: BackSight
+    100004: FrontSight
+    100006: Gun
+    100008: Handle
+    100010: Pump
+    100012: Shell
+    100014: Shell.001
+    100016: Shell.002
+    100018: Shell.003
+    100020: ShellHolder
+    100022: ShellTop
+    100024: ShellTop1
+    100026: ShellTop2
+    100028: ShellTop3
+    100030: Stock
     400000: //RootNode
-    400002: 870mcs
-    400004: 870mcs_12 gauge round
-    400006: 870mcs_bolt
-    400008: 870mcs_pump
-    400010: 870mcs_side shells
-    400012: 870mcs_top rail
-    2300000: 870mcs
-    2300002: 870mcs_12 gauge round
-    2300004: 870mcs_bolt
-    2300006: 870mcs_pump
-    2300008: 870mcs_side shells
-    2300010: 870mcs_top rail
-    3300000: 870mcs
-    3300002: 870mcs_12 gauge round
-    3300004: 870mcs_bolt
-    3300006: 870mcs_pump
-    3300008: 870mcs_side shells
-    3300010: 870mcs_top rail
-    4300000: 870mcs
-    4300002: 870mcs_top rail
-    4300004: 870mcs_pump
-    4300006: 870mcs_bolt
-    4300008: 870mcs_side shells
-    4300010: 870mcs_12 gauge round
-    9500000: //RootNode
+    400002: BackSight
+    400004: FrontSight
+    400006: Gun
+    400008: Handle
+    400010: Pump
+    400012: Shell
+    400014: Shell.001
+    400016: Shell.002
+    400018: Shell.003
+    400020: ShellHolder
+    400022: ShellTop
+    400024: ShellTop1
+    400026: ShellTop2
+    400028: ShellTop3
+    400030: Stock
+    2300000: BackSight
+    2300002: FrontSight
+    2300004: Gun
+    2300006: Handle
+    2300008: Pump
+    2300010: Shell
+    2300012: Shell.001
+    2300014: Shell.002
+    2300016: Shell.003
+    2300018: ShellHolder
+    2300020: ShellTop
+    2300022: ShellTop1
+    2300024: ShellTop2
+    2300026: ShellTop3
+    2300028: Stock
+    3300000: BackSight
+    3300002: FrontSight
+    3300004: Gun
+    3300006: Handle
+    3300008: Pump
+    3300010: Shell
+    3300012: Shell.001
+    3300014: Shell.002
+    3300016: Shell.003
+    3300018: ShellHolder
+    3300020: ShellTop
+    3300022: ShellTop1
+    3300024: ShellTop2
+    3300026: ShellTop3
+    3300028: Stock
+    4300000: BackSight
+    4300002: FrontSight
+    4300004: ShellHolder
+    4300006: ShellTop3
+    4300008: ShellTop2
+    4300010: ShellTop1
+    4300012: ShellTop
+    4300014: Shell.003
+    4300016: Shell.002
+    4300018: Shell.001
+    4300020: Shell
+    4300022: Handle
+    4300024: Stock
+    4300026: Pump
+    4300028: Gun
   materials:
     importMaterials: 1
     materialName: 0
@@ -94,10 +138,8 @@ ModelImporter:
     legStretch: .0500000007
     feetSpacing: 0
     rootMotionBoneName: 
-    hasTranslationDoF: 0
   lastHumanDescriptionAvatarSource: {instanceID: 0}
-  animationType: 2
-  humanoidOversampling: 1
+  animationType: 0
   additionalBone: 0
   userData: 
   assetBundleName: 
