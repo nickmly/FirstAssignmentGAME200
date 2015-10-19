@@ -16,16 +16,19 @@ public class Enemy : MonoBehaviour {
 	
 	public State currentState;
 	private float moveSpeed = 0.1f;
-	private bool alive = true;
+	public bool alive = true;
 	private float health = 100f;
 	private float patrolRadius = 15f;
 	private float visionRadius = 30f;
 	private float patrolTimer = 5f;
 	private float maxPatrolTimer;
+	private float lookTimer = 0.4f;
+	private float maxLookTimer;
 
 	// Use this for initialization
 	void Start () {
 		//target = GameObject.Find ("FPSController"); //temporary
+		maxLookTimer = lookTimer;
 		maxPatrolTimer = patrolTimer;
 		currentState = State.Looking;
 	}
@@ -65,11 +68,27 @@ public class Enemy : MonoBehaviour {
 			if (Vector3.Distance (target, transform.position) > 10) {
 				transform.position += transform.forward * moveSpeed;
 			} else {
-				//attack
+				currentState = State.Attacking;
 			}
 		} else {
 			currentState = State.Looking;
 		}
+	}
+	
+	void Attack(){
+		if(Physics.CheckSphere(transform.position,visionRadius,1<<11)){
+			if(lookTimer > 0){
+				lookTimer -= Time.deltaTime;
+			} else {
+				lookTimer = Random.Range(0,maxLookTimer);
+				target = player.position;
+				Vector3 targetPos = new Vector3(target.x,transform.position.y,target.z);
+				transform.LookAt (targetPos);
+			}
+		} else {
+			currentState = State.Looking;
+		}
+	
 	}
 	
 	// Update is called once per frame
@@ -81,6 +100,10 @@ public class Enemy : MonoBehaviour {
 				break;
 				case State.Chasing:
 					Chase ();
+				break;
+				
+				case State.Attacking:
+					Attack();
 				break;
 				
 			}
