@@ -3,8 +3,9 @@ using System.Collections;
 
 public class Enemy : MonoBehaviour {
 
-	[SerializeField] private GameObject target;
-
+	[SerializeField] private Vector3 target;
+	[SerializeField] private Transform player;
+	
 	public enum State
 	{
 		Idle,
@@ -12,23 +13,76 @@ public class Enemy : MonoBehaviour {
 		Looking,
 		Attacking,
 	}
-
+	
+	public State currentState;
 	private float moveSpeed = 0.1f;
 	private bool alive = true;
 	private float health = 100f;
+	private float patrolRadius = 15f;
+	private float visionRadius = 30f;
+	private float patrolTimer = 5f;
+	private float maxPatrolTimer;
 
 	// Use this for initialization
 	void Start () {
-		target = GameObject.Find ("FPSController"); //temporary
+		//target = GameObject.Find ("FPSController"); //temporary
+		maxPatrolTimer = patrolTimer;
+		currentState = State.Looking;
+	}
+	
+	void Patrol(){
+		if(patrolTimer > 0){
+			patrolTimer -= Time.deltaTime;
+			Vector3 targetPos = new Vector3(target.x,transform.position.y,target.z);
+			transform.LookAt (targetPos);
+			if (Vector3.Distance (target, transform.position) > 1) {
+				transform.position += transform.forward * moveSpeed;
+			} else {
+				patrolTimer = 0;
+			}
+		} else {
+			patrolTimer = maxPatrolTimer;
+			Vector3 randomPos = new Vector3(transform.position.x + Random.Range(-patrolRadius,+patrolRadius),transform.position.y,transform.position.z + Random.Range(-patrolRadius,+patrolRadius));
+			target = randomPos;
+			if(Physics.CheckSphere(transform.position,visionRadius,1<<11)){
+				target = player.position;
+				currentState = State.Chasing;
+				return;
+			}
+		}
+	}
+	
+	void OnDrawGizmos(){
+		Gizmos.color = Color.blue;
+		Gizmos.DrawWireSphere(transform.position,visionRadius);
+	}
+	
+	void Chase(){
+		if(Physics.CheckSphere(transform.position,visionRadius,1<<11)){
+			target = player.position;
+			Vector3 targetPos = new Vector3(target.x,transform.position.y,target.z);
+			transform.LookAt (targetPos);
+			if (Vector3.Distance (target, transform.position) > 10) {
+				transform.position += transform.forward * moveSpeed;
+			} else {
+				//attack
+			}
+		} else {
+			currentState = State.Looking;
+		}
 	}
 	
 	// Update is called once per frame
 	void Update () {
 		if (alive) {	
-			Vector3 targetPos = new Vector3(target.transform.position.x,transform.position.y,target.transform.position.z);
-			transform.LookAt (targetPos);
-			if (Vector3.Distance (target.transform.position, transform.position) > 10) {
-				transform.position += transform.forward * moveSpeed;
+			switch(currentState){
+				case State.Looking:
+					Patrol();
+				break;
+				case State.Chasing:
+					Chase ();
+				break;
+				
 			}
 
 			if (health <= 0) {

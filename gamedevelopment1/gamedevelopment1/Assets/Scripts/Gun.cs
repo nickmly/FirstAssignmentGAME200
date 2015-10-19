@@ -10,9 +10,11 @@ public class Gun : MonoBehaviour {
 	[SerializeField] private Vector3 stillRotation;
 	[SerializeField] private float recoilAmount, walkIntensity;
 	[SerializeField] private float damage;
-	[SerializeField] private bool shotgun;
+	[SerializeField] private bool shotgun, boltAction;
 	[SerializeField] private float lerpSpeed;
 	[SerializeField] private bool hasScope = false;
+	[SerializeField] private int zoomFOV = 30;
+	[SerializeField] private int normalFOV = 80;
 	[SerializeField] private bool extendableStock = false;
 	[SerializeField] private Vector3 extendedPosition;
 	
@@ -58,7 +60,9 @@ public class Gun : MonoBehaviour {
 	void OnGUI(){
 		if (!isADS) {
 			GUI.DrawTexture (new Rect (centerX - cursorW / 2, centerY - cursorH / 2, cursorW, cursorH), crosshair);
-		} else if (isADS && hasScope) {
+		} else if (gunType == "sniper") {
+			GUI.DrawTexture (new Rect (0, 0, Screen.width, Screen.height), sight);
+		} else if (isADS && hasScope && gunType != "sniper") {
 			GUI.DrawTexture (new Rect (centerX - cursorW / 2, centerY - cursorH / 2, cursorW, cursorH), sight);
 		}
 	}
@@ -117,14 +121,17 @@ public class Gun : MonoBehaviour {
 			anim.SetBool ("sprinting",false);
 		}
 
-		if (Input.GetKeyDown (KeyCode.Mouse1)) {
+		if (Input.GetKeyDown (KeyCode.Mouse1) && !pumping) {
+			if(hasScope){
+				Camera.main.fieldOfView = zoomFOV;
+			}
 			currentPos = sightPos;
 			isADS = true;
 		}
 
 		if (Input.GetKeyUp (KeyCode.Mouse1)) {
+			ResetScope();
 			currentPos = stillPos;
-			isADS = false;
 		}
 		
 		if(isADS){
@@ -144,6 +151,9 @@ public class Gun : MonoBehaviour {
 
 		if ((Input.GetKeyDown (KeyCode.R) || ammo <= 0) && !reloading) { // Reload gun with R
 			if(mags > 0){
+				ResetScope();
+				currentPos = stillPos;
+				isADS = false;
 				ReloadGun();
 				mags--;
 			}
@@ -205,7 +215,7 @@ public class Gun : MonoBehaviour {
 			newBullet2.GetComponent<Projectile> ().damage = damage;
 		}
 
-		if (!shotgun) {
+		if (!shotgun && !boltAction) {
 			CreateShell (mousePos);
 		}
 
@@ -214,6 +224,7 @@ public class Gun : MonoBehaviour {
 
 	private void PumpGun(){
 		canShoot = true;
+		pumping = false;
 		fireRate = maxFireRate;
 		anim.SetBool ("pumping", false);
 		anim.applyRootMotion = true;
@@ -227,9 +238,10 @@ public class Gun : MonoBehaviour {
 	private void CreateShell(Ray mousePos){
 		Rigidbody newShell = Instantiate (shellPrefab, shellExitPoint.transform.position, shellExitPoint.transform.rotation) as Rigidbody; // Create shell at shell exit point
 		//newShell.AddForce (40f, 10f, 0f, ForceMode.Impulse);
-		newShell.transform.GetChild(0).Rotate(new Vector3(Random.Range(0,360),0,Random.Range(0,360)));
+		Vector3 random = new Vector3(0,Random.Range(0,360),Random.Range(0,360));
+		newShell.transform.Rotate(random);
 		newShell.velocity = transform.parent.right * 10f;
-		newShell.transform.LookAt (mousePos.GetPoint (30f));
+		//newShell.transform.LookAt (mousePos.GetPoint (30f));
 	}
 
 	private void ReloadGun(){
@@ -246,7 +258,14 @@ public class Gun : MonoBehaviour {
 		reloading = true;
 		ammo = 0;
 	}
-
+	
+	public void ResetScope(){
+		if(hasScope){
+			Camera.main.fieldOfView = normalFOV;
+		}
+		isADS = false;
+	}
+	
 	public void ResetGun(){
 		anim.applyRootMotion = true;
 		if (!isADS) {
@@ -275,10 +294,11 @@ public class Gun : MonoBehaviour {
 		if (fireRate > 0) {
 			fireRate -= Time.deltaTime;
 		} else {
-			if(!shotgun){
+			if(!shotgun && !boltAction){
 				canShoot = true;
 			} else {
 				if(!anim.GetBool("sprinting") && !anim.GetBool("vaulting")){
+					ResetScope();
 					pumping = true;
 					anim.SetBool ("pumping", true);
 					anim.applyRootMotion = false;

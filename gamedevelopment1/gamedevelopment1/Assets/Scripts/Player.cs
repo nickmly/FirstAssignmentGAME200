@@ -101,17 +101,24 @@ public class Player : MonoBehaviour {
 			}
 		}
 		if (currentGun != newGunType) {
-			if(primaryGun != newGunType && secondaryWeapon != null){
+			if(primaryWeapon == null || (primaryGun != newGunType && primaryWeapon.GetComponent<Gun>().gunType == currentWeapon.GetComponent<Gun>().gunType && secondaryWeapon != null)){
+				if(primaryWeapon != null){
+					Instantiate(Resources.Load<GameObject>("Prefabs/Pickups/" + primaryGun + "Pickup"),transform.position,transform.rotation);
+				}
 				Destroy (currentWeapon);
 				primaryWeapon = Resources.Load<GameObject>("Prefabs/" + newGunType);
 				currentWeapon = Instantiate(primaryWeapon,transform.position,transform.rotation) as GameObject;
 				GetNewGun();
-			} else {
+			} else if(secondaryWeapon == null || (secondaryGun != newGunType && secondaryWeapon.GetComponent<Gun>().gunType == currentWeapon.GetComponent<Gun>().gunType)){
+				if(secondaryWeapon != null){
+					Instantiate(Resources.Load<GameObject>("Prefabs/Pickups/" + secondaryGun + "Pickup"),transform.position,transform.rotation);
+				}
 				Destroy (currentWeapon);
 				secondaryWeapon = Resources.Load<GameObject>("Prefabs/" + newGunType);
 				currentWeapon = Instantiate(secondaryWeapon,transform.position,transform.rotation) as GameObject;
 				GetNewGun();
 			}
+			
 		}
 	}
 
@@ -135,8 +142,8 @@ public class Player : MonoBehaviour {
 
 	private bool IsGrounded(){
 		Collider[] collisions = Physics.OverlapSphere (new Vector3 (collider.transform.position.x,
-		                                                            collider.transform.position.y - (collider.bounds.extents.y+collider.bounds.size.y/8),
-		                                                            collider.transform.position.z), 0.1f);
+		                                                            collider.transform.position.y - (collider.bounds.extents.y+collider.bounds.size.y/12),
+		                                                            collider.transform.position.z), 0.2f);
 		if (collisions.Length > 0) {
 			return true;
 		} else {
@@ -219,7 +226,7 @@ public class Player : MonoBehaviour {
 		Gizmos.color = Color.red;
 		Gizmos.DrawWireSphere(new Vector3 (collider.transform.position.x,
 		                                   collider.transform.position.y - (collider.bounds.extents.y+
-		                                 collider.bounds.size.y/8), collider.transform.position.z), 0.1f);
+		                                 collider.bounds.size.y/12), collider.transform.position.z), 0.2f);
 		Gizmos.DrawRay (collider.transform.position, fwd);
 		Gizmos.color = Color.yellow;
 		Gizmos.DrawRay(new Vector3(collider.transform.position.x,collider.transform.position.y-collider.bounds.extents.y/2,collider.transform.position.z),fwd);
