@@ -14,8 +14,8 @@ public class Spawner : MonoBehaviour {
 	void Start () {
 		maxTimeToSpawn = timeToSpawn;
 		if (spawnGrid) {
-			currentX = objectToSpawn.GetComponent<BoxCollider>().size.x/1.5f;
-			currentY = objectToSpawn.GetComponent<BoxCollider>().size.y/2f;
+			currentX = objectToSpawn.GetComponent<BoxCollider>().size.x/2f;
+			currentY = objectToSpawn.GetComponent<BoxCollider>().size.y/3f;
 			for(int i = 0; i < gridSize; i++){//columns
 				for(int j = 0; j < gridSize; j++){//rows
 					GameObject newObject = Instantiate (objectToSpawn, new Vector3(transform.localPosition.x+currentX*i,transform.localPosition.y+currentY*j,transform.position.z), transform.rotation) as GameObject;

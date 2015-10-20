@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using UnityStandardAssets.ImageEffects;
 
 public class Gun : MonoBehaviour {
 
@@ -167,6 +168,14 @@ public class Gun : MonoBehaviour {
 			}
 		}
 	}
+	
+	public void Hide(){
+		currentPos = new Vector3(stillPos.x,stillPos.y-3,stillPos.z);
+	}
+	
+	public void Show(){
+		currentPos = stillPos;
+	}
 
 	private void Walk(){//TODO: move this to player and affect the camera
 		if (walkDecision == 0) {
@@ -214,6 +223,7 @@ public class Gun : MonoBehaviour {
 			newBullet2.velocity = newBullet2.transform.forward * bulletSpeed; // Move bullet towards center with speed of bulletSpeed
 			newBullet2.GetComponent<Projectile> ().damage = damage;
 		}
+		transform.parent.GetComponent<VignetteAndChromaticAberration>().enabled = true;
 
 		if (!shotgun && !boltAction) {
 			CreateShell (mousePos);
@@ -245,6 +255,7 @@ public class Gun : MonoBehaviour {
 	}
 
 	private void ReloadGun(){
+		transform.parent.GetComponent<VignetteAndChromaticAberration>().enabled = false;
 		if(isADS){
 			currentPos = sightPos;
 		} else{ 
@@ -287,6 +298,7 @@ public class Gun : MonoBehaviour {
 			} else{ 
 				currentPos = stillPos;
 			}
+			
 			flashDuration = maxFlashDuration;
 			flash.SetActive(false);
 			//flash.gameObject.GetComponent<ParticleSystem> ().Stop();
@@ -294,6 +306,7 @@ public class Gun : MonoBehaviour {
 		if (fireRate > 0) {
 			fireRate -= Time.deltaTime;
 		} else {
+			transform.parent.GetComponent<VignetteAndChromaticAberration>().enabled = false;
 			if(!shotgun && !boltAction){
 				canShoot = true;
 			} else {

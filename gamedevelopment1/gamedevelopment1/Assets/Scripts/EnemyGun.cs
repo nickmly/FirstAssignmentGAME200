@@ -41,11 +41,12 @@ public class EnemyGun : MonoBehaviour {
 	
 	void Update(){
 		transform.localPosition = Vector3.Lerp (transform.localPosition, currentPos, lerpSpeed);
-		
-		if(enemy.currentState == Enemy.State.Attacking && enemy.alive){
-			if(!canShoot){
-				PrepareToFire();
-			} else {
+		if(!canShoot){
+			PrepareToFire();
+		}
+		if(enemy.currentState == Enemy.State.Attacking || enemy.currentState == Enemy.State.Chasing  && enemy.alive){
+			transform.LookAt(enemy.target);
+			 if(canShoot) {
 				if(ammo > 0){
 					FireGun();
 				} else {
@@ -64,7 +65,8 @@ public class EnemyGun : MonoBehaviour {
 		flashDuration = maxFlashDuration;
 		canShoot = false;
 		GameObject bullet = Instantiate (bulletPrefab, bulletExitPoint.transform.position, transform.rotation) as GameObject; // Create bullet at bullet exit point
-		bullet.GetComponent<Rigidbody>().velocity = transform.parent.forward * 100f;
+		bullet.transform.LookAt(enemy.target);
+		bullet.GetComponent<Rigidbody>().velocity = transform.forward * 100f;
 		bullet.GetComponent<Projectile> ().damage = damage;
 		CreateShell();		
 	}

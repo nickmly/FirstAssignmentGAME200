@@ -13,12 +13,14 @@ public class Player : MonoBehaviour {
 	[SerializeField] private HUDManager hud;
 	[SerializeField] private BoxCollider collider;
 	[SerializeField] private Gun gun;
+	[SerializeField] private Transform grenadeArm;
+	[SerializeField] private GameObject grenadePrefab;
 
 	public bool isRunning = false;
 	public bool isWalking = false;
 
 	public GameObject currentWeapon;
-	private Animator gunAnim;
+	private Animator gunAnim, anim;
 	private CharacterController cc;
 	private float normalSpeed;
 	private Rigidbody rb;
@@ -42,11 +44,13 @@ public class Player : MonoBehaviour {
 		//currentWeapon = GameObject.FindGameObjectWithTag ("Gun");
 		vaultTimer = 0.3f;
 		maxVaultTimer = vaultTimer;
+		anim = GetComponent<Animator>();
 		if (currentWeapon != null) {
 			gun = currentWeapon.GetComponent<Gun> ();
 			hud.gun = gun;
 			gunAnim = gun.GetComponent<Animator> ();
 		}
+		//grenadePrefab = Resources.Load<GameObject>("grenade");
 	}
 
 	void FixedUpdate(){
@@ -233,6 +237,33 @@ public class Player : MonoBehaviour {
 	}
 #endregion
 
+	private void PutGunAway(){
+		if(gun != null){
+			gun.Hide ();
+		}
+	}
+	
+	private void PullUpGun(){
+		if(gun != null){
+			gun.Show ();
+		}
+	}
+	
+
+	private void PerformGrenadeAnim(){
+		anim.SetBool("throwingNade",true);
+	}
+	
+	private void ThrowGrenade(){
+		anim.SetBool("throwingNade",false);
+		GameObject newGrenade = Instantiate (grenadePrefab, grenadeArm.position, transform.rotation) as GameObject;
+		Vector3 fakeMousePos = new Vector3 (Screen.width / 2, Screen.height / 2, Input.mousePosition.z); // Fake mouse pos used is placed in center of screen
+		Ray mousePos = Camera.main.ScreenPointToRay (fakeMousePos); 
+		newGrenade.transform.LookAt (mousePos.GetPoint (350f)); 
+		newGrenade.GetComponent<Rigidbody>().AddForce(transform.forward * 500f);
+		newGrenade.GetComponent<Rigidbody>().AddForce(transform.up * 500f);
+	}
+
 	private void HandleInput(){
 		float x = 0;
 		float z = 0;
@@ -256,6 +287,11 @@ public class Player : MonoBehaviour {
 		if (Input.GetKeyUp (KeyCode.W) || Input.GetKeyUp (KeyCode.A) 
 		    || Input.GetKeyUp (KeyCode.S) || Input.GetKeyUp (KeyCode.D)) {
 			isWalking = false;
+		}
+		
+		if(Input.GetKeyDown(KeyCode.G)){
+			PutGunAway();
+			PerformGrenadeAnim();
 		}
 
 
