@@ -9,6 +9,7 @@ public class Enemy : MonoBehaviour {
 		Chasing,
 		Looking,
 		Attacking,
+		Dead
 	}
 	public State currentState;
 	[SerializeField] private Transform player;
@@ -18,7 +19,6 @@ public class Enemy : MonoBehaviour {
 	private int direction = 1;
 	private BoxCollider collider;
 	private Rigidbody rb;
-	private NavMeshAgent agent;	
 	private float moveSpeed = 0.1f;	
 	private float health = 100f;
 	private float patrolRadius = 15f;
@@ -30,26 +30,24 @@ public class Enemy : MonoBehaviour {
 	private float vaultTimer = 0.3f;
 	private float maxVaultTimer;
 	private bool isVaulting = false;
-
+	private Quaternion currentRot;
 	// Use this for initialization
 	void Start () {
-		//target = GameObject.Find ("FPSController"); //temporary
 		maxLookTimer = lookTimer;
 		maxPatrolTimer = patrolTimer;
 		maxVaultTimer = vaultTimer;
 		currentState = State.Looking;
-		agent = GetComponent<NavMeshAgent>();
 		rb = GetComponent<Rigidbody>();
 		collider = GetComponent<BoxCollider>();
 	}
 	
 	void Patrol(){
+		transform.rotation = Quaternion.Slerp (transform.rotation, currentRot, 0.5f);
 		if(patrolTimer > 0){
 			patrolTimer -= Time.deltaTime;
 			Vector3 targetPos = new Vector3(target.x,transform.position.y,target.z);
-			transform.LookAt (targetPos);
+			currentRot = Quaternion.LookRotation(targetPos - transform.position);
 			if (Vector3.Distance (target, transform.position) > 1) {
-				//agent.SetDestination(
 				transform.position += (transform.forward * direction) * moveSpeed;
 			} else {
 				patrolTimer = 0;
@@ -59,8 +57,6 @@ public class Enemy : MonoBehaviour {
 			Vector3 randomPos = new Vector3(transform.position.x + Random.Range(-patrolRadius,+patrolRadius),transform.position.y,transform.position.z + Random.Range(-patrolRadius,+patrolRadius));
 			target = randomPos;
 			if(Physics.CheckSphere(transform.position,visionRadius,1<<11)){
-				target = player.position;
-				agent.enabled = true;
 				currentState = State.Chasing;
 				return;
 			}
@@ -73,29 +69,24 @@ public class Enemy : MonoBehaviour {
 	}
 	
 	void Chase(){
+		transform.rotation = Quaternion.Slerp (transform.rotation, currentRot, 0.5f);
 		if(Physics.CheckSphere(transform.position,visionRadius,1<<11)){
-			target = player.position;
-			//Vector3 targetPos = new Vector3(target.x,transform.position.y,target.z);
-			//transform.LookAt (targetPos);
+			Vector3 targetPos = new Vector3(target.x,transform.position.y,target.z);
+			currentRot = Quaternion.LookRotation(targetPos - transform.position);
 			if (Vector3.Distance (target, transform.position) > 20) {
-				if(!isVaulting){
-					agent.SetDestination(target);
-				}
-				//agent.SetDestination(targetPos);
-				//transform.position += transform.forward * moveSpeed;
+				transform.position += transform.forward * moveSpeed;
 			} else {
 				currentState = State.Attacking;
-				agent.enabled = false;
 				rb.velocity = Vector3.zero;
 			}
 		} else {
 			currentState = State.Looking;
-			agent.enabled = false;
 			rb.velocity = Vector3.zero;
 		}
 	}
 	
 	void Attack(){
+		transform.rotation = Quaternion.Slerp (transform.rotation, currentRot, 0.5f);
 		if(Physics.CheckSphere(transform.position,patrolRadius,1<<11)){
 			if(lookTimer > 0){
 				lookTimer -= Time.deltaTime;
@@ -103,11 +94,10 @@ public class Enemy : MonoBehaviour {
 				lookTimer = Random.Range(0,maxLookTimer);
 				target = player.position;
 				Vector3 targetPos = new Vector3(target.x,transform.position.y,target.z);
-				transform.LookAt (targetPos);
+				currentRot = Quaternion.LookRotation(targetPos - transform.position);
 			}
 		} else {
 			target = player.position;
-			agent.enabled = true;
 			currentState = State.Chasing;
 		}
 	
@@ -145,65 +135,28 @@ public class Enemy : MonoBehaviour {
 		}
 	}
 	
-	private bool CanVault(){
-		int layerMask = 1 << 8;
-		Collider[] collisions = Physics.OverlapSphere (new Vector3 (collider.transform.position.x,
-		                                                            collider.transform.position.y - 
-		                                                            (collider.bounds.extents.y+collider.bounds.size.y/8),
-		                                                            collider.transform.position.z), 2f,layerMask);
-		if (collisions.Length > 0) {
-			return true;
-		} else {
-			return false;
-		}
-	}
-	
-	private void Vault(){
-		rb.velocity = Vector3.zero;
-		if (vaultTimer > 0) {
-			vaultTimer -= Time.deltaTime;
-		} else {
-			isVaulting = false;
-			vaultTimer = maxVaultTimer;
-			if(!IsColliding("forward",8)){			
-				rb.AddForce(transform.forward * 350f/2);				
-			}
-		}
-	}
-	
-
 	void Update () {
 		if (alive) {	
-			switch(currentState){
-				case State.Looking:
-					Patrol();
+			switch (currentState) {
+			case State.Looking:
+				Patrol ();
 				break;
-				case State.Chasing:
-					Chase ();
+			case State.Chasing:
+				Chase ();
 				break;
 				
-				case State.Attacking:
-					Attack();
+			case State.Attacking:
+				Attack ();
 				break;
 				
 			}
-			
-//			if (IsColliding("forward",8)) {
-//				if(CanVault()){
-//					if(currentState == State.Chasing){
-//						agent.enabled = false;
-//						currentState = State.Looking;
-//					}
-//					rb.AddForce(new Vector3(0,350f,0));
-//					isVaulting = true;
-//				}
-//			}
-//			if (isVaulting) {
-//				Vault ();
-//			}
 
 			if (health <= 0) {
 				Death ();
+			}
+		} else {
+			if(currentState != State.Dead){
+				currentState = State.Dead;
 			}
 		}
 	}
@@ -219,7 +172,6 @@ public class Enemy : MonoBehaviour {
 	public void Death(){
 		rb.freezeRotation = false;
 		alive = false;
-		agent.enabled = false;
 	}
 
 	void OnCollisionEnter(Collision col){
